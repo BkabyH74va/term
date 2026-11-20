@@ -48,6 +48,10 @@ final class TerminalView: UIView, UIKeyInput {
     var smartDashesType: UITextSmartDashesType = .no
     var smartInsertDeleteType: UITextSmartInsertDeleteType = .no
     var returnKeyType: UIReturnKeyType = .default
+    var keyboardAppearance: UIKeyboardAppearance = .dark
+    var enablesReturnKeyAutomatically: Bool = false
+    var isSecureTextEntry: Bool = false
+    var textContentType: UITextContentType? = nil
 
     func insertText(_ t: String) {
         guard t != "\n" else {
