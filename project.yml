@@ -1,0 +1,28 @@
+name: Terminal
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: NO
+targets:
+  Terminal:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: bin
+        type: folder
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.term
+        PRODUCT_NAME: Terminal
+        INFOPLIST_FILE: Config/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Config/app.entitlements
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_IDENTITY: ""
+        SWIFT_EMIT_LOC_STRINGS: NO
