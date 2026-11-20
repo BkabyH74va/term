@@ -31,6 +31,7 @@ final class Shell {
         posix_spawn_file_actions_init(&fa)
         posix_spawnattr_init(&at)
         posix_spawnattr_setflags(&at, Int16(POSIX_SPAWN_SETPGROUP))
+        posix_spawnattr_setpgroup(&at, 0)
         posix_spawn_file_actions_adddup2(&fa, inPipe[0], 0)
         posix_spawn_file_actions_adddup2(&fa, outPipe[1], 1)
         posix_spawn_file_actions_adddup2(&fa, outPipe[1], 2)
@@ -38,15 +39,18 @@ final class Shell {
         posix_spawn_file_actions_addclose(&fa, inPipe[1])
         posix_spawn_file_actions_addclose(&fa, outPipe[0])
 
-        var argv = [strdup(sh.path), strdup("-i")]; argv.append(nil)
-        var envp = Paths.env().map { strdup($0) }; envp.append(nil)
-        defer { argv.forEach { free($0) }; envp.forEach { free($0) } }
+        var argv: [UnsafeMutablePointer<CChar>?] = [strdup(sh.path), strdup("-i")]
+        argv.append(nil)
+        var envp: [UnsafeMutablePointer<CChar>?] = Paths.env().map { strdup($0) }
+        envp.append(nil)
 
         let rc = posix_spawn(&pid, sh.path, &fa, &at, argv, envp)
         posix_spawn_file_actions_destroy(&fa)
         posix_spawnattr_destroy(&at)
         close(inPipe[0])
         close(outPipe[1])
+        argv.forEach { free($0) }
+        envp.forEach { free($0) }
 
         guard rc == 0 else {
             close(inPipe[1]); close(outPipe[0])
@@ -62,9 +66,11 @@ final class Shell {
         DispatchQueue.global(qos: .userInitiated).async {
             var chunk = [UInt8](repeating: 0, count: 4096)
             while true {
-                let n = read(fd, &chunk, chunk.count)
+                let n = Darwin.read(fd, &chunk, chunk.count)
                 if n <= 0 { break }
-                self.lock.lock(); self.buf.append(contentsOf: chunk[0..<n]); self.lock.unlock()
+                self.lock.lock()
+                self.buf.append(contentsOf: chunk[0..<n])
+                self.lock.unlock()
                 self.flush()
             }
             close(fd)
@@ -90,10 +96,13 @@ final class Shell {
     func write(_ s: String) {
         guard running, toChild >= 0 else { return }
         let bytes = Array(s.utf8)
+        let fd = toChild
         DispatchQueue.global(qos: .userInitiated).async {
             var off = 0
             while off < bytes.count {
-                let n = bytes[off...].withUnsafeBytes { write(self.toChild, $0.baseAddress, $0.count) }
+                let n = bytes[off...].withUnsafeBytes {
+                    Darwin.write(fd, $0.baseAddress, $0.count)
+                }
                 if n <= 0 { break }
                 off += n
             }
