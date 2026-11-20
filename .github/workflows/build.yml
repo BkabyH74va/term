@@ -12,9 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get ios_system
-        run: git clone --depth 1 https://github.com/holzschu/ios_system ios_system
-
       - name: Newest Xcode
         run: |
           sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
@@ -22,6 +19,12 @@ jobs:
 
       - name: Build ios_system
         run: |
+          set -x
+          pwd
+          ls -la
+          rm -rf ios_system
+          git clone --depth 1 https://github.com/holzschu/ios_system ios_system
+          ls -la ios_system
           cd ios_system/Framework
           chmod +x *.sh 2>/dev/null || true
           ./build.sh
