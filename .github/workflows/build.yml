@@ -20,8 +20,19 @@ jobs:
       - name: Build ios_system
         run: |
           set -x
-          git clone --depth 1 --recurse-submodules https://github.com/holzschu/ios_system ios_system
-          cd ios_system/Framework
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git clone --depth 1 https://github.com/holzschu/ios_system ios_system
+          cd ios_system
+          if [ -f .gitmodules ]; then
+            git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | while read -r key path; do
+              name=$(echo "$key" | sed 's/^submodule\.\(.*\)\.path$/\1/')
+              url=$(git config -f .gitmodules --get "submodule.$name.url" || echo "")
+              https=$(echo "$url" | sed -e 's|^git@github.com:|https://github.com/|' -e 's|^git://|https://|' -e 's|^ssh://git@github.com/|https://github.com/|')
+              rm -rf "$path"
+              git clone --depth 1 "$https" "$path" || echo "SKIPPED $path"
+            done
+          fi
+          cd Framework
           xcodebuild \
             -project ios_system.xcodeproj \
             -target ios_system \
