@@ -20,16 +20,20 @@ jobs:
       - name: Build ios_system
         run: |
           set -x
-          pwd
-          ls -la
-          rm -rf ios_system
-          git clone --depth 1 https://github.com/holzschu/ios_system ios_system
-          ls -la ios_system
+          git clone --depth 1 --recurse-submodules https://github.com/holzschu/ios_system ios_system
           cd ios_system/Framework
-          chmod +x *.sh 2>/dev/null || true
-          ./build.sh
+          xcodebuild \
+            -project ios_system.xcodeproj \
+            -target ios_system \
+            -configuration Release \
+            -sdk iphoneos \
+            -arch arm64 \
+            -derivedDataPath "$GITHUB_WORKSPACE/fwbuild" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
           cd "$GITHUB_WORKSPACE"
-          FW=$(find ios_system -type d -name 'ios_system.framework' | head -1)
+          FW=$(find fwbuild -type d -name 'ios_system.framework' | head -1)
           test -n "$FW"
           mkdir -p build-framework
           cp -R "$FW" build-framework/
