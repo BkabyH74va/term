@@ -16,6 +16,7 @@ targets:
       - path: Sources
       - path: bin
         type: folder
+        optional: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.term
@@ -26,3 +27,12 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_IDENTITY: ""
         SWIFT_EMIT_LOC_STRINGS: NO
+schemes:
+  Terminal:
+    build:
+      targets:
+        Terminal: all
+    run:
+      config: Release
+    archive:
+      config: Release
